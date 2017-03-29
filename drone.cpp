@@ -1,151 +1,117 @@
-/*
-Parker Conroy
-ARLab
-Test1
-*/
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
-#include <geometry_msgs/Twist.h>
-#include <ardrone_autonomy/Navdata.h>
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/objdetect/objdetect.hpp>
 
-	geometry_msgs::Twist twist_msg;
-	geometry_msgs::Twist twist_msg_hover;
-	geometry_msgs::Twist twist_msg_neg;
-	geometry_msgs::Twist twist_msg_pshover;
-	geometry_msgs::Twist twist_msg_up;
-	std_msgs::Empty emp_msg;
-	double vx_=0.0;
-	double vy_=0.0;
-	double vz_=0.0;
-	float takeoff_time=8.0;
-	float fly_time=3.0;
-	float land_time=3.0;
-	float kill_time =4.0;	
-			
-void nav_callback(const ardrone_autonomy::Navdata& msg_in)
+#include <cstdlib>
+
+using namespace ros;
+using namespace std;
+using namespace cv;
+
+static const char WINDOW[]="RGB Image";
+static const char WINDOW2[]="Gray Image";
+static const std::string OPENCV_WINDOW = "Image window";
+static int drone_state;
+
+std_msgs::Empty emp_msg;
+
+void process(const sensor_msgs::ImageConstPtr& msg)
+     {
+       cv_bridge::CvImagePtr cv_ptr;
+       try
+       {
+         cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+       }
+       catch (cv_bridge::Exception& e)
+       {
+         ROS_ERROR("cv_bridge exception: %s", e.what());
+         return;
+       }
+   
+       // Draw an example circle on the video stream
+
+       // Update GUI Window
+       cv::imshow(OPENCV_WINDOW, cv_ptr->image);
+       cv::waitKey(3);
+       
+       // Output modified video stream
+      //  image_pub_.publish(cv_ptr->toImageMsg());
+     }
+
+/**
+ * This tutorial demonstrates simple sending of messages over the ROS system.
+ */
+int main(int argc, char **argv)
 {
-	//Take in state of ardrone	
-	vx_=msg_in.vx*0.001;
-	vy_=msg_in.vy*0.001;	
-	vz_=msg_in.vz*0.001;	
-	//ROS_INFO("getting sensor reading");	
+  /**
+   * The ros::init() function needs to see argc and argv so that it can perform
+   * any ROS arguments and name remapping that were provided at the command line.
+   * For programmatic remappings you can use a different version of init() which takes
+   * remappings directly, but for most command-line programs, passing argc and argv is
+   * the easiest way to do it.  The third argument to init() is the name of the node.
+   *
+   * You must call one of the versions of ros::init() before using any other
+   * part of the ROS system.
+   */
+  init(argc, argv, "hello");
+
+  /**
+   * NodeHandle is the main access point to communications with the ROS system.
+   * The first NodeHandle constructed will fully initialize this node, and the last
+   * NodeHandle destructed will close down the node.
+   */
+  NodeHandle n;
+
+  ROS_INFO_STREAM("HELLO ROS!");
+
+	ros::init(argc, argv,"ARDrone_test");
+  ros::NodeHandle node;
+  ros::Rate loop_rate(50);
+
+/* Commands */
+  ros::Publisher pub_takeoff;
+  ros::Publisher pub_land;
+  ros::Publisher pub_reset;
+  ros::Publisher pub_hover;
+  ros::Publisher pub_rot90;
+
+/* initialize commands */
+	pub_takeoff = node.advertise<std_msgs::Empty>("/ardrone/takeoff", 1); /* Message queue length is just 1 */
+  pub_land = node.advertise<std_msgs::Empty>("/ardrone/land", 1); /* Message queue length is just 1 */
+  pub_reset = node.advertise<std_msgs::Empty>("/ardrone/reset", 1); /* Message queue length is just 1 */
+  pub_hover = node.advertise<std_msgs::Empty>("/ardrone/hover", 1);
+//  pub_rot90 = node.advertise<std_msgs::Empty>("/ardrone/cw", 90);
+
+/* Imagetransport to OpenCV */
+  image_transport::ImageTransport it(n);
+  image_transport::Subscriber image_sub = it.subscribe("/ardrone/image_raw",1,process);
+
+  cv::namedWindow(WINDOW);
+  cv::namedWindow(WINDOW2);
+
+ 	while (ros::ok()) 
+ 	{
+	  double time_start = (double)ros::Time::now().toSec();
+/* Reset Drone */
+    ROS_INFO("Resetting drone ...");
+	  while ((double)ros::Time::now().toSec() < time_start+2.0)
+	  { 
+	  	std::system("rosservice call /ardrone/flattrim");
+	  }
+    ROS_INFO("Reset Done");
+	 }
+
+
+
+  cv::destroyWindow(WINDOW);
+  cv::destroyWindow(WINDOW2);
+
+  ros::spin();
+
+  return 0;
 }
-
-geometry_msgs::Twist test_controller(double vx_des,double vy_des,double vz_des,double K)
-{
-		geometry_msgs::Twist twist_msg_gen;
-	
-		twist_msg_gen.linear.x=K*(vx_des-vx_); //{-1 to 1}=K*( m/s - m/s)
-		//ROS_INFO("vx des- vx sensor &f",vx_des-vx_);
-		twist_msg_gen.linear.y=K*(vy_des-vy_); 
-		twist_msg_gen.linear.z=K*(vz_des-vz_);
-		twist_msg_gen.angular.x=1.0; 
-		twist_msg_gen.angular.y=1.0;
-		twist_msg_gen.angular.z=0.0;
-		return twist_msg_gen;
-}
-
-int main(int argc, char** argv)
-{
-
-	printf("Manual Test Node Starting");
-	ros::init(argc, argv,"ARDrone_manual_test");
-    ros::NodeHandle node;
-    ros::Rate loop_rate(50);
-
-	ros::Publisher pub_empty_land;
-	ros::Publisher pub_twist;
-	ros::Publisher pub_empty_takeoff;
-	ros::Publisher pub_empty_reset;
-	ros::Subscriber nav_sub;
-	double start_time;
-
-//hover message
-			twist_msg_hover.linear.x=0.0; 
-			twist_msg_hover.linear.y=0.0;
-			twist_msg_hover.linear.z=0.0;
-			twist_msg_hover.angular.x=0.0; 
-			twist_msg_hover.angular.y=0.0;
-			twist_msg_hover.angular.z=0.0;  
-//fly up
-			twist_msg_up.linear.x=0.0; 
-			twist_msg_up.linear.y=0.0;
-			twist_msg_up.linear.z=0.5;
-			twist_msg_up.angular.x=0.0; 
-			twist_msg_up.angular.y=0.0;
-			twist_msg_up.angular.z=0.0;			
-//command message
-			twist_msg.linear.x=0.0; 
-			twist_msg.linear.y=0.0;
-			twist_msg.linear.z=0.0;
-			twist_msg.angular.x=0.0; 
-			twist_msg.angular.y=0.0;
-			twist_msg.angular.z=0.0;
-
-
-	nav_sub = node.subscribe("/ardrone/navdata", 1, nav_callback);	
-  	pub_twist = node.advertise<geometry_msgs::Twist>("/cmd_vel", 1); 
-	pub_empty_takeoff = node.advertise<std_msgs::Empty>("/ardrone/takeoff", 1); 
-	pub_empty_land = node.advertise<std_msgs::Empty>("/ardrone/land", 1); 
-	pub_empty_reset = node.advertise<std_msgs::Empty>("/ardrone/reset", 1);
-	
-	start_time =(double)ros::Time::now().toSec();	
-	ROS_INFO("Starting ARdrone_test loop");
-
-	double desired_vx=0.75; // [m/s]
-	//double desired_vx=0.0; // [m/s]
-	double K = .75; // []
-
-while (ros::ok()) {
-		while ((double)ros::Time::now().toSec()< start_time+takeoff_time){ //takeoff
-		
-			pub_empty_takeoff.publish(emp_msg); //launches the drone
-				pub_twist.publish(twist_msg_hover); //drone is flat
-			ROS_INFO("Taking off");
-			ros::spinOnce();
-			loop_rate.sleep();
-			}//while takeoff
-
-		while  ((double)ros::Time::now().toSec()> start_time+takeoff_time+fly_time){
-		
-			pub_twist.publish(twist_msg_hover); //drone is flat
-		
-			ROS_INFO("Landing");
-			
-					
-			if ((double)ros::Time::now().toSec()> takeoff_time+start_time+fly_time+land_time+kill_time){
-			pub_empty_land.publish(emp_msg); //lands the drone
-				ROS_INFO("Closing Node");
-				exit(0); 	}//kill node
-			ros::spinOnce();
-			loop_rate.sleep();			
-}//while land
-
-		while ( (double)ros::Time::now().toSec()> start_time+takeoff_time && (double)ros::Time::now().toSec()< start_time+takeoff_time+fly_time){	
-		
-			twist_msg=test_controller(desired_vx,0.0,0.0,K);
-
-			if((double)ros::Time::now().toSec()< start_time+takeoff_time+fly_time){
-			pub_twist.publish(twist_msg);
-			ROS_INFO("Flying +ve");
-
-			}//fly according to desired twist
-			
-			if((double)ros::Time::now().toSec()> start_time+takeoff_time+fly_time){
-			
-			desired_vx=-desired_vx;
-			pub_twist.publish(twist_msg);
-			ROS_INFO("Flying -ve");
-
-			}//fly according to desired twist
-			
-			ros::spinOnce();
-			loop_rate.sleep();
-			}
-
-	ros::spinOnce();
-	loop_rate.sleep();
-
-}//ros::ok
-
-}//main
