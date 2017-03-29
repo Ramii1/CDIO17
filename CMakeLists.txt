@@ -209,6 +209,8 @@ include_directories(
 add_executable(drone drone.cpp)
 target_link_libraries(drone ${catkin_LIBRARIES} ${OpenCV_INCLUDE_DIRS})
 
+add_executable(video video.cpp)
+target_link_libraries(video ${catkin_LIBRARIES} ${OpenCV_INCLUDE_DIRS})
 
 ## Add gtest based cpp test target and link libraries
 # catkin_add_gtest(${PROJECT_NAME}-test test/test_cdio.cpp)
