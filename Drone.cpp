@@ -17,6 +17,7 @@ static const char WINDOW2[]="Gray Image";
 static const std::string OPENCV_WINDOW = "Image window";
 static int drone_state;
 
+
 std_msgs::Empty emp_msg;
 
 void process(const sensor_msgs::ImageConstPtr& msg)
