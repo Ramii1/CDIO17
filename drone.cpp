@@ -94,19 +94,6 @@ int main(int argc, char **argv)
   cv::namedWindow(WINDOW);
   cv::namedWindow(WINDOW2);
 
- 	while (ros::ok()) 
- 	{
-	  double time_start = (double)ros::Time::now().toSec();
-/* Reset Drone */
-    ROS_INFO("Resetting drone ...");
-	  while ((double)ros::Time::now().toSec() < time_start+2.0)
-	  { 
-	  	std::system("rosservice call /ardrone/flattrim");
-	  }
-    ROS_INFO("Reset Done");
-	 }
-
-
 
   cv::destroyWindow(WINDOW);
   cv::destroyWindow(WINDOW2);

@@ -8,10 +8,10 @@ project(cdio17)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  rospy
-  std_msgs
+  sensor_msgs
   cv_bridge
+  roscpp
+  std_msgs
   image_transport
 )
 
@@ -107,9 +107,9 @@ find_package(OpenCV REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES cdio17
-#  CATKIN_DEPENDS roscpp rospy std_msgs
+INCLUDE_DIRS include
+LIBRARIES cdio
+#  CATKIN_DEPENDS roscpp std_msgs
 #  DEPENDS system_lib
 )
 
@@ -121,37 +121,30 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/cdio17.cpp
+# add_library(cdio
+#   src/${PROJECT_NAME}/cdio.cpp
 # )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(cdio ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-## With catkin_make all packages are built within a single CMake context
-## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/cdio17_node.cpp)
-
-## Rename C++ executable without prefix
-## The above recommended prefix causes long target names, the following renames the
-## target back to the shorter version for ease of user use
-## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
+# add_executable(cdio_node src/cdio_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(cdio_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
+# target_link_libraries(cdio_node
 #   ${catkin_LIBRARIES}
 # )
 
@@ -170,7 +163,7 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
+# install(TARGETS cdio cdio_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -197,20 +190,10 @@ include_directories(
 ################
 ## USER ADDED ##
 ################
-#add_executable(hello hello.cpp)
-#target_link_libraries(hello ${catkin_LIBRARIES} ${OpenCV_INCLUDE_DIRS})
-#
-#add_executable(huladetection huladetection.cpp)
-#target_link_libraries(huladetection ${catkin_LIBRARIES} ${OpenCV_INCLUDE_DIRS})
-#
-#add_executable(huladetection2 Object.cpp huladetection2.cpp)
-#target_link_libraries(huladetection2 ${catkin_LIBRARIES} ${OpenCV_INCLUDE_DIRS})
 
 add_executable(drone drone.cpp)
 target_link_libraries(drone ${catkin_LIBRARIES} ${OpenCV_INCLUDE_DIRS})
 
-#add_executable(video video.cpp)
-#target_link_libraries(video ${catkin_LIBRARIES} ${OpenCV_INCLUDE_DIRS})
 
 ## Add gtest based cpp test target and link libraries
 # catkin_add_gtest(${PROJECT_NAME}-test test/test_cdio.cpp)
