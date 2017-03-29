@@ -191,8 +191,9 @@ include_directories(
 ## USER ADDED ##
 ################
 
-add_executable(drone drone.cpp)
-target_link_libraries(drone ${catkin_LIBRARIES} ${OpenCV_INCLUDE_DIRS})
+add_executable(Drone Drone.cpp)
+target_link_libraries(Drone ${catkin_LIBRARIES} ${OpenCV_INCLUDE_DIRS})
+
 
 
 ## Add gtest based cpp test target and link libraries
